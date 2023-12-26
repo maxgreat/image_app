@@ -9,6 +9,8 @@ from kivy.utils import platform
 if platform == "android":
     from android.permissions import request_permissions, Permission
     request_permissions([Permission.READ_MEDIA_IMAGES, Permission.READ_EXTERNAL_STORAGE])
+    import android.activity as activity
+    from jnius import autoclass
 import os
 import sys
 
@@ -28,17 +30,17 @@ class MainWindow(StackLayout):
 
         # Check for READ_EXTERNAL_STORAGE permission and request it if not granted
         if platform == "android":
-            if not permissions.check_permission('android.permission.READ_EXTERNAL_STORAGE'):
-                permissions.request_permission('android.permission.READ_EXTERNAL_STORAGE')
-                return
+            if not Permission.check_permission('android.permission.READ_EXTERNAL_STORAGE'):
+                Permission.request_permission('android.permission.READ_EXTERNAL_STORAGE')
 
-        # Access the Android image library using Storage Access Framework
-        Intent = activity.Intent
-        intent = Intent()
-        intent.setAction(Intent.ACTION_OPEN_DOCUMENT)
-        intent.setType("image/*")
-        activity.bind(on_activity_result=self.on_activity_result)
-        activity.startActivityForResult(intent, 1)
+            # Access the Android image library using Storage Access Framework
+            Intent = activity.Intent
+            intent = Intent()
+            intent.setAction(Intent.ACTION_OPEN_DOCUMENT)
+            intent.setType("image/*")
+            activity.bind(on_activity_result=self.on_activity_result)
+            activity.startActivityForResult(intent, 1)
+            res = str(autoclass('android.os.Environment').DIRECTORY_DCIM)
 
     def on_activity_result(self, requestCode, resultCode, intent):
         if requestCode == 1:
