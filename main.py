@@ -5,14 +5,9 @@ from kivy.uix.popup import Popup
 from kivy.uix.image import Image
 from kivy.core.window import Window
 from kivy.lang import Builder
-from kivy.utils import platform
-if platform == "android":
-    from android.permissions import request_permissions, Permission
-    request_permissions([Permission.READ_MEDIA_IMAGES, Permission.READ_EXTERNAL_STORAGE])
-    import android.activity as activity
-    from jnius import autoclass
 import os
-import sys
+
+VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
 
 
 def show_full_image(instance, touch):
@@ -27,27 +22,12 @@ class MainWindow(StackLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='lr-tb', spacing=10, size_hint_y=None, **kwargs)
         self.images_list = []
-
-        # Check for READ_EXTERNAL_STORAGE permission and request it if not granted
-        if platform == "android":
-            if not Permission.check_permission('android.permission.READ_EXTERNAL_STORAGE'):
-                Permission.request_permission('android.permission.READ_EXTERNAL_STORAGE')
-
-            # Access the Android image library using Storage Access Framework
-            Intent = activity.Intent
-            intent = Intent()
-            intent.setAction(Intent.ACTION_OPEN_DOCUMENT)
-            intent.setType("image/*")
-            activity.bind(on_activity_result=self.on_activity_result)
-            activity.startActivityForResult(intent, 1)
-            res = str(autoclass('android.os.Environment').DIRECTORY_DCIM)
-
-    def on_activity_result(self, requestCode, resultCode, intent):
-        if requestCode == 1:
-            if resultCode == -1:  # Activity.RESULT_OK
-                selected_uri = intent.getData()
-                image_path = selected_uri.getPath()
-                self.add_image(image_path)
+        path = os.path.join(os.path.expanduser('~'), "OneDrive\Images")
+        for f in os.listdir(path):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in VALID_IMG_EXT:
+                self.images_list.append(os.path.join(path,f))
+                self.add_image(os.path.join(path,f))
 
     def add_image(self, image_path):
         image = Image(source=image_path, size_hint_y=None, size_hint_x=None,
@@ -57,11 +37,17 @@ class MainWindow(StackLayout):
 
 class MyApp(App):
     def build(self):
-        self.layout = MainWindow()
-        self.layout.bind(minimum_height=self.layout.setter('height'))
-        root = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
-        root.add_widget(self.layout)
-        return root
+        Window.bind(on_resize=self.on_window_resize)
+        layout = MainWindow()
+        layout.bind(minimum_height=layout.setter('height'))
+        self.root = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
+        self.root.add_widget(layout)
+        return self.root
+     
+
+    def on_window_resize(self, window, width, height):
+        for child in self.root.children:
+            print(child.pos)
 
 if __name__ == "__main__":
     MyApp().run()
