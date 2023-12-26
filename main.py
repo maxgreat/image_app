@@ -5,9 +5,13 @@ from kivy.uix.popup import Popup
 from kivy.uix.image import Image
 from kivy.core.window import Window
 from kivy.lang import Builder
-import android.permissions as permissions
-from android import activity
+from kivy.utils import platform
+if platform == "android":
+    from android.permissions import request_permissions, Permission
+    request_permissions([Permission.READ_MEDIA_IMAGES, Permission.READ_EXTERNAL_STORAGE])
 import os
+import sys
+
 
 def show_full_image(instance, touch):
     if instance.collide_point(*touch.pos):
@@ -23,9 +27,10 @@ class MainWindow(StackLayout):
         self.images_list = []
 
         # Check for READ_EXTERNAL_STORAGE permission and request it if not granted
-        if not permissions.check_permission('android.permission.READ_EXTERNAL_STORAGE'):
-            permissions.request_permission('android.permission.READ_EXTERNAL_STORAGE')
-            return
+        if platform == "android":
+            if not permissions.check_permission('android.permission.READ_EXTERNAL_STORAGE'):
+                permissions.request_permission('android.permission.READ_EXTERNAL_STORAGE')
+                return
 
         # Access the Android image library using Storage Access Framework
         Intent = activity.Intent
