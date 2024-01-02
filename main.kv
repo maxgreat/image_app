@@ -1,0 +1,27 @@
+#: kivy 2.2.1
+<SideMenu>:
+    BoxLayout:
+        canvas:
+            Color:
+                # #263238
+                rgb: 0x26 / 255.0, 0x32 / 255.0, 0x38 / 255.0
+
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        id: 'buttonlayout'
+        orientation: 'horizontal'
+        spacing: 10
+        size_hint: (1,None)
+        pos_hint_x: 0.5
+        height: "48dp"
+        Button:
+            id: buttonZoomIn
+            text: "+"
+            size_hint: (None, None)
+            on_press: app.zoom_in(id)
+        Button:
+            id: buttonZoomOut
+            text: "-"
+            size_hint: (None, None)
+            on_press: app.zoom_out(id)

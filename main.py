@@ -2,18 +2,25 @@ from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.image import Image
 from kivy.uix.image import AsyncImage
 from kivy.core.window import Window
 from kivy.lang import Builder
+from kivy.logger import Logger, LOG_LEVELS
+
 import os
 
 VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
+#Logger.setLevel(LOG_LEVELS["error"])
 
+Builder.load_file("main.kv")
 
+            
 def show_full_image(instance, touch):
     if instance.collide_point(*touch.pos):
         popup = Popup(title='Full Image',
@@ -35,10 +42,16 @@ class MainWindow(StackLayout):
 
     def add_image(self, image_path):
         def update_ui(dt):
-            image = AsyncImage(source=image_path, size_hint_y=None, size_hint_x=None, allow_stretch=True, fit_mode='scale-down')
+            image = AsyncImage(source=image_path, size_hint_y=None, size_hint_x=None, allow_stretch=True, fit_mode='contain')
             image.bind(on_touch_down=show_full_image)
             self.add_widget(image)
         Clock.schedule_once(update_ui)
+
+class SideMenu(Widget):
+    pass
+
+
+
 
 class MyApp(App):
     def build(self):
@@ -52,17 +65,7 @@ class MyApp(App):
         self.scroll_view_layout.add_widget(layout)
         self.root.add_widget(self.scroll_view_layout)
 
-
-        floating_button = Button(
-            text="+",
-            size_hint=(None, None),
-            size=("48dp", "48dp"),
-            pos_hint={"right": 0.95, "top": 0.95}
-        )
-        floating_button.bind(on_press=self.on_floating_button_press)
-
-
-        self.root.add_widget(floating_button)
+        self.root.add_widget(SideMenu())
         return self.root
      
     
@@ -72,6 +75,15 @@ class MyApp(App):
     def on_floating_button_press():
         pass
    
+    def zoom_in(self, instance):
+        for child in self.scroll_view_layout.children[0].children:
+            child.height *= 1.1
+            child.width *= 1.1
+
+    def zoom_out(self, instance):
+        for child in self.scroll_view_layout.children[0].children:
+            child.height *= 0.9
+            child.width *= 0.9
 
 if __name__ == "__main__":
     MyApp().run()
