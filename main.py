@@ -12,11 +12,11 @@ from kivy.uix.image import AsyncImage
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.logger import Logger, LOG_LEVELS
+from kivy.utils import platform
 
 import os
 
 VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
-#Logger.setLevel(LOG_LEVELS["error"])
 
 Builder.load_file("main.kv")
 
@@ -33,7 +33,16 @@ class MainWindow(StackLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='lr-tb', spacing=(1,1), padding=1, size_hint_y=None, **kwargs)
         self.images_list = []
-        path = os.path.join(os.path.expanduser('~'), "OneDrive\Images")
+        
+        if platform == 'android':
+            from android.storage import primary_external_storage_path
+            SD_CARD = primary_external_storage_path()
+            path = '/storage/emulated/0/Pictures/'
+        elif platform == 'win':
+            path = os.path.join(os.path.expanduser('~'), "OneDrive\Images")
+        else:
+            path = os.path.join(os.path.expanduser('~'), "/Pictures")
+        
         for f in os.listdir(path):
             ext = os.path.splitext(f)[1].lower()
             if ext in VALID_IMG_EXT:
@@ -51,10 +60,12 @@ class SideMenu(Widget):
     pass
 
 
-
-
 class MyApp(App):
     def build(self):
+        if platform == 'android':
+            from android.permissions import request_permissions, Permission
+            request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+
         Window.bind(on_resize=self.on_window_resize)
 
         layout = MainWindow()
