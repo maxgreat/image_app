@@ -1,41 +1,100 @@
-from kivy.app import App
-from kivy.clock import Clock
-from kivy.uix.stacklayout import StackLayout
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.widget import Widget
-from kivy.uix.button import Button
-from kivy.uix.popup import Popup
-from kivy.uix.image import Image
-from kivy.uix.image import AsyncImage
-from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.logger import Logger, LOG_LEVELS
-from kivy.utils import platform
-
-import requests
-
 import os
+from kivy.factory import Factory as F
+from kivy.lang import Builder
+from kivy.utils import platform
+from kivy.clock import Clock
+from kivy.properties import StringProperty, ObjectProperty
+from kivy.animation import Animation
+
+from kivymd.app import MDApp
+from kivy.uix.screenmanager import Screen
+from kivymd.uix.hero import MDHeroFrom
+
+KV = '''
+MDScreenManager:
+    MDScreen:
+        name: "Main Screen"
+        ScrollView:
+            MDGridLayout:
+                id: grid
+                cols: 3
+                spacing: "4dp"
+                padding: "4dp"
+                adaptive_height: True
+
+    MDScreen:
+        name: "Photo Screen"
+        heroes_to: [hero_to]
+        MDHeroTo:
+            id: hero_to
+            size_hint: 1, 1
+            pos_hint: {"center_x": 0.5, "center_y":0.5}
+        MDRaisedButton:
+            text: "Back"
+            pos_hint: {"center_x": .5}
+            y: "36dp"
+            on_release:
+                root.current_heroes = [hero_to.tag]
+                root.current = "Main Screen"
+
+<ImageTile>:
+    size_hint_y: None
+    height: "200dp"
+    radius: 24
+
+    MDSmartTile:
+        id: tile
+        radius: 24
+        box_radius: 0, 0, 24, 24
+        box_color: 0, 0, 0, .5
+        size_hint: None, None
+        size: root.size
+        mipmap: True
+        on_release: root.on_release()
+'''
+
+
 
 VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
 
-Builder.load_file("main.kv")
 
-            
-def show_full_image(instance, touch):
-    if instance.collide_point(*touch.pos):
-        popup = Popup(title='Full Image',
-                      content=Image(source=instance.source),
-                      size_hint=(None, None),
-                      size=(Window.width - 100, Window.height - 100))
-        popup.open()
+class ImageTile(MDHeroFrom):
+    def __init__(self, source, manager, **kwargs):
+        super().__init__(**kwargs)
+        self.ids.tile.source = source
+        self.manager = manager
+        self.ids.tile.ids.image.ripple_duration_in_fast = 0.05
 
-class MainWindow(StackLayout):
-    def __init__(self, **kwargs):
-        super().__init__(orientation='lr-tb', spacing=(1,1), padding=1, size_hint_y=None, **kwargs)
+    def on_transform_in(self, instance_hero_widget, duration):
+        Animation(
+            radius=[0, 0, 0, 0],
+            box_radius=[0, 0, 0, 0],
+            duration=duration,
+        ).start(instance_hero_widget)
+
+    def on_transform_out(self, instance_hero_widget, duration):
+        Animation(
+            radius=[24, 24, 24, 24],
+            box_radius=[0, 0, 24, 24],
+            duration=duration,
+        ).start(instance_hero_widget)
+
+    def on_release(self):
+        def switch_screen(*args):
+            self.manager.current_heroes = [self.tag]
+            self.manager.ids.hero_to.tag = self.tag
+            self.manager.current = "Photo Screen"
+
+        Clock.schedule_once(switch_screen, 0.2)
+
+
+
+class ImageApp(MDApp):
+    def build(self):
+        return Builder.load_string(KV)
+    
+    def on_start(self):
         self.images_list = []
-        
         if platform == 'android':
             from android.storage import primary_external_storage_path
             SD_CARD = primary_external_storage_path()
@@ -44,59 +103,16 @@ class MainWindow(StackLayout):
             path = os.path.join(os.path.expanduser('~'), "OneDrive\Images")
         else:
             path = os.path.join(os.path.expanduser('~'), "/Pictures")
-        
+
+        self.images_list = []
         for f in os.listdir(path):
             ext = os.path.splitext(f)[1].lower()
             if ext in VALID_IMG_EXT:
                 self.images_list.append(os.path.join(path,f))
-                self.add_image(os.path.join(path,f))
-
-    def add_image(self, image_path):
-        def update_ui(dt):
-            image = AsyncImage(source=image_path, size_hint_y=None, size_hint_x=None, allow_stretch=True, fit_mode='contain')
-            image.bind(on_touch_down=show_full_image)
-            self.add_widget(image)
-        Clock.schedule_once(update_ui)
-
-class SideMenu(Widget):
-    pass
-
-
-class MyApp(App):
-    def build(self):
-        if platform == 'android':
-            from android.permissions import request_permissions, Permission
-            request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
-
-        Window.bind(on_resize=self.on_window_resize)
-
-        layout = MainWindow()
-        layout.bind(minimum_height=layout.setter('height'))
         
-        self.root = FloatLayout()
-        self.scroll_view_layout = ScrollView(size_hint=(1, None), size=(Window.width, Window.height))
-        self.scroll_view_layout.add_widget(layout)
-        self.root.add_widget(self.scroll_view_layout)
+        for i in self.images_list:
+            image_item = ImageTile(source=i, manager=self.root, tag=f"Tag {i}")
+            self.root.ids.grid.add_widget(image_item)
 
-        self.root.add_widget(SideMenu())
-        return self.root
-     
-    
-    def on_window_resize(self, window, width, height):
-        self.scroll_view_layout.size = (Window.width, Window.height)
-    
-    def on_floating_button_press():
-        pass
-   
-    def zoom_in(self, instance):
-        for child in self.scroll_view_layout.children[0].children:
-            child.height *= 1.1
-            child.width *= 1.1
 
-    def zoom_out(self, instance):
-        for child in self.scroll_view_layout.children[0].children:
-            child.height *= 0.9
-            child.width *= 0.9
-
-if __name__ == "__main__":
-    MyApp().run()
+ImageApp().run()
