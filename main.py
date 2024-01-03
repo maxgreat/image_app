@@ -14,6 +14,8 @@ from kivy.lang import Builder
 from kivy.logger import Logger, LOG_LEVELS
 from kivy.utils import platform
 
+import requests
+
 import os
 
 VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
