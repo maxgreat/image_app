@@ -30,6 +30,13 @@ MDScreenManager:
             size_hint: 1, 1
             pos_hint: {"center_x": 0.5, "center_y":0.5}
         MDRaisedButton:
+            text: "Super Resolution"
+            pos_hint: {"center_x": .2}
+            y: "36dp"
+            on_release:
+                root.current_heroes = [hero_to.tag]
+                root.current = "Main Screen"
+        MDRaisedButton:
             text: "Back"
             pos_hint: {"center_x": .5}
             y: "36dp"
