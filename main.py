@@ -1,17 +1,25 @@
 import os
+#os.environ['KIVY_IMAGE'] = 'PIL'
 from kivy.factory import Factory as F
 from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.properties import StringProperty, ObjectProperty
 from kivy.animation import Animation
+from kivy.uix.behaviors import ButtonBehavior
+from kivymd.uix.behaviors import RectangularRippleBehavior
+from kivymd.uix.fitimage import FitImage
+from kivy.uix.image import AsyncImage, Image
 
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.hero import MDHeroFrom
+from kivymd.uix.screen import MDScreen
+
 
 KV = '''
 MDScreenManager:
+    id: screenManager
     MDScreen:
         name: "Main Screen"
         ScrollView:
@@ -21,6 +29,15 @@ MDScreenManager:
                 spacing: "4dp"
                 padding: "4dp"
                 adaptive_height: True
+        MDSlider:
+            id: slider
+            pos_hint: {"center_x": .5, "center_y": .1}
+            size_hint: .5, .1
+            min: 1
+            max: 10
+            value: 3
+            step: 1
+            on_value: app.slider_down(*args)
 
     MDScreen:
         name: "Photo Screen"
@@ -33,9 +50,7 @@ MDScreenManager:
             text: "Super Resolution"
             pos_hint: {"center_x": .2}
             y: "36dp"
-            on_release:
-                root.current_heroes = [hero_to.tag]
-                root.current = "Main Screen"
+            on_release: app.next_image()
         MDRaisedButton:
             text: "Back"
             pos_hint: {"center_x": .5}
@@ -46,23 +61,24 @@ MDScreenManager:
 
 <ImageTile>:
     size_hint_y: None
+    size_hint_x: 1
     height: "200dp"
     radius: 24
-
-    MDSmartTile:
+    ClickableImage:
         id: tile
-        radius: 24
-        box_radius: 0, 0, 24, 24
-        box_color: 0, 0, 0, .5
         size_hint: None, None
         size: root.size
-        mipmap: True
         on_release: root.on_release()
+        mipmap: True
+        opacity : 1
 '''
 
 
 
-VALID_IMG_EXT = [".jpg",".gif",".png",".tga"]
+VALID_IMG_EXT = [".jpg",".png",".tga"]
+
+class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
+    pass
 
 
 class ImageTile(MDHeroFrom):
@@ -70,21 +86,6 @@ class ImageTile(MDHeroFrom):
         super().__init__(**kwargs)
         self.ids.tile.source = source
         self.manager = manager
-        self.ids.tile.ids.image.ripple_duration_in_fast = 0.05
-
-    def on_transform_in(self, instance_hero_widget, duration):
-        Animation(
-            radius=[0, 0, 0, 0],
-            box_radius=[0, 0, 0, 0],
-            duration=duration,
-        ).start(instance_hero_widget)
-
-    def on_transform_out(self, instance_hero_widget, duration):
-        Animation(
-            radius=[24, 24, 24, 24],
-            box_radius=[0, 0, 24, 24],
-            duration=duration,
-        ).start(instance_hero_widget)
 
     def on_release(self):
         def switch_screen(*args):
@@ -93,7 +94,6 @@ class ImageTile(MDHeroFrom):
             self.manager.current = "Photo Screen"
 
         Clock.schedule_once(switch_screen, 0.2)
-
 
 
 class ImageApp(MDApp):
@@ -107,7 +107,7 @@ class ImageApp(MDApp):
             SD_CARD = primary_external_storage_path()
             path = '/storage/emulated/0/Pictures/'
         elif platform == 'win':
-            path = os.path.join(os.path.expanduser('~'), "OneDrive\Images")
+            path = os.path.join(os.path.expanduser('~'), "OneDrive/Images")
         else:
             path = os.path.join(os.path.expanduser('~'), "/Pictures")
 
@@ -117,9 +117,16 @@ class ImageApp(MDApp):
             if ext in VALID_IMG_EXT:
                 self.images_list.append(os.path.join(path,f))
         
-        for i in self.images_list:
-            image_item = ImageTile(source=i, manager=self.root, tag=f"Tag {i}")
+        for i, im in enumerate(self.images_list):
+            image_item = ImageTile(source=im, manager=self.root, tag=f"{i}")
             self.root.ids.grid.add_widget(image_item)
+
+    def slider_down(self, slider, value):
+        self.root.ids.grid.cols = value
+
+
+    def superresolution(self):
+        pass
 
 
 ImageApp().run()
