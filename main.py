@@ -13,6 +13,8 @@ from kivy.storage.jsonstore import JsonStore
 
 from kivymd.app import MDApp
 from kivymd.uix.hero import MDHeroFrom
+from kivymd.uix.menu import MDDropdownMenu
+from kivy.metrics import dp
 
 
 VALID_IMG_EXT = [".jpg",".png",".tga"]
@@ -37,10 +39,43 @@ class ImageTile(MDHeroFrom):
 
 
 class ImageApp(MDApp):
-    def build(self):
-        Window.bind(on_request_close=self.on_request_close)
-        self.images_list = {}
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.store = JsonStore('data.json')
+        if 'photos' in self.store:
+            self.images_list = self.store['photos']
+        else:
+            self.images_list = {}
+
         self.models = yaml.safe_load("model_config.yml")
+
+    def build(self):
+        Window.bind(on_request_close=self.exit)
+
+        menu_items = [
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Sync Library",
+                        "height": dp(56),
+                        "on_release": lambda : self.synclib(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Clear Images",
+                        "height": dp(56),
+                        "on_release": lambda : self.clearimages(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Exit",
+                        "height": dp(56),
+                        "on_release": lambda : self.exit(),
+                    }
+                ]
+        self.menu = MDDropdownMenu(
+            items=menu_items,
+            width_mult=4,
+        )
         return Builder.load_file('main.kv')
     
     def on_start(self):
@@ -67,13 +102,32 @@ class ImageApp(MDApp):
         
         for i, (im, drawn) in enumerate(self.images_list.items()):
             if(not drawn):
-                image_item = ImageTile(source=im, manager=self.root, tag=f"{i}")
+                image_item = ImageTile(source=im, manager=self.root, tag=im)
                 self.root.ids.grid.add_widget(image_item)
 
     def slider_down(self, slider, value):
         self.root.ids.grid.cols = value
 
+    def synclib(self, *args):
+        """
+            Upload images to the server
+        """
+        print("Checking missing images on server")
+        pass
+
+    def mainmenu(self, button):
+        self.menu.caller = button
+        self.menu.open()
+
+
+    def clearimages(self):
+        self.images_list = {}
+        self.root.ids.grid.clear_widgets()
+
     def superresolution(self):
+        pass
+
+    def objectremoval(self):
         pass
 
     def add_repo(self):
@@ -83,9 +137,9 @@ class ImageApp(MDApp):
             print(path)
             self.add_images(path[0])
 
-    def on_request_close(self, *args):
+    def exit(self, *args):
+        self.store['photos'] = self.images_list
         self.stop()
-        return True
 
 
 ImageApp().run()

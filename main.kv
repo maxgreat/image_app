@@ -3,13 +3,18 @@ MDScreenManager:
     id: screenManager
     MDScreen:
         name: "Main Screen"
-        ScrollView:
-            MDGridLayout:
-                id: grid
-                cols: 3
-                spacing: "4dp"
-                padding: "4dp"
-                adaptive_height: True
+        MDBoxLayout:
+            orientation: 'vertical'
+            MDTopAppBar:
+                title: "Photo Gallery"
+                left_action_items: [["menu", lambda x: app.mainmenu(x)]]
+            ScrollView:
+                MDGridLayout:
+                    id: grid
+                    cols: 3
+                    spacing: "4dp"
+                    padding: "4dp"
+                    adaptive_height: True
         MDFloatingActionButton:
             icon: "image-plus"
             md_bg_color: app.theme_cls.primary_color
