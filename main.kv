@@ -1,27 +1,59 @@
 #: kivy 2.2.1
-<SideMenu>:
-    BoxLayout:
-        canvas:
-            Color:
-                # #263238
-                rgb: 0x26 / 255.0, 0x32 / 255.0, 0x38 / 255.0
+MDScreenManager:
+    id: screenManager
+    MDScreen:
+        name: "Main Screen"
+        ScrollView:
+            MDGridLayout:
+                id: grid
+                cols: 3
+                spacing: "4dp"
+                padding: "4dp"
+                adaptive_height: True
+        MDFloatingActionButton:
+            icon: "image-plus"
+            md_bg_color: app.theme_cls.primary_color
+            pos_hint: {"center_x": .9, "center_y": .1}
+            on_release: app.add_repo()
+        MDSlider:
+            id: slider
+            pos_hint: {"center_x": .5, "center_y": .1}
+            size_hint: .5, .1
+            min: 1
+            max: 10
+            value: 3
+            step: 1
+            on_value: app.slider_down(*args)
 
-            Rectangle:
-                size: self.size
-                pos: self.pos
-        id: 'buttonlayout'
-        orientation: 'horizontal'
-        spacing: 10
-        size_hint: (1,None)
-        pos_hint_x: 0.5
-        height: "48dp"
-        Button:
-            id: buttonZoomIn
-            text: "+"
-            size_hint: (None, None)
-            on_press: app.zoom_in(id)
-        Button:
-            id: buttonZoomOut
-            text: "-"
-            size_hint: (None, None)
-            on_press: app.zoom_out(id)
+    MDScreen:
+        name: "Photo Screen"
+        heroes_to: [hero_to]
+        MDHeroTo:
+            id: hero_to
+            size_hint: 1, 1
+            pos_hint: {"center_x": 0.5, "center_y":0.5}
+        MDRaisedButton:
+            text: "Super Resolution"
+            pos_hint: {"center_x": .2}
+            y: "36dp"
+            on_release: app.next_image()
+        MDRaisedButton:
+            text: "Back"
+            pos_hint: {"center_x": .5}
+            y: "36dp"
+            on_release:
+                root.current_heroes = [hero_to.tag]
+                root.current = "Main Screen"
+
+<ImageTile>:
+    size_hint_y: None
+    size_hint_x: 1
+    height: "200dp"
+    radius: 24
+    ClickableImage:
+        id: tile
+        size_hint: None, None
+        size: root.size
+        on_release: root.on_release()
+        mipmap: True
+        opacity : 1
