@@ -10,12 +10,15 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RectangularRippleBehavior
 from kivymd.uix.fitimage import FitImage
 from kivy.uix.image import AsyncImage, Image
+from kivy.core.window import Window
+
 
 from kivymd.app import MDApp
 from kivy.uix.screenmanager import Screen
 from kivymd.uix.hero import MDHeroFrom
 from kivymd.uix.screen import MDScreen
 
+import yaml
 
 KV = '''
 MDScreenManager:
@@ -29,6 +32,11 @@ MDScreenManager:
                 spacing: "4dp"
                 padding: "4dp"
                 adaptive_height: True
+        MDFloatingActionButton:
+            icon: "image-plus"
+            md_bg_color: app.theme_cls.primary_color
+            pos_hint: {"center_x": .9, "center_y": .1}
+            on_release: app.add_repo()
         MDSlider:
             id: slider
             pos_hint: {"center_x": .5, "center_y": .1}
@@ -98,35 +106,56 @@ class ImageTile(MDHeroFrom):
 
 class ImageApp(MDApp):
     def build(self):
+        Window.bind(on_request_close=self.on_request_close)
+        self.images_list = {}
+        self.models = yaml.safe_load("model_config.yml")
         return Builder.load_string(KV)
     
     def on_start(self):
-        self.images_list = []
         if platform == 'android':
             from android.storage import primary_external_storage_path
+            from android.storage import app_storage_path
+            self.settings_path = app_storage_path()
             SD_CARD = primary_external_storage_path()
             path = '/storage/emulated/0/Pictures/'
         elif platform == 'win':
+            self.settings_path = self.user_data_dir
             path = os.path.join(os.path.expanduser('~'), "OneDrive/Images")
+            path = "D://recup/done/perfect/"
+            path = "/"
         else:
             path = os.path.join(os.path.expanduser('~'), "/Pictures")
+        self.add_images(path)
+        
 
-        self.images_list = []
+    def add_images(self, path: str):
         for f in os.listdir(path):
             ext = os.path.splitext(f)[1].lower()
-            if ext in VALID_IMG_EXT:
-                self.images_list.append(os.path.join(path,f))
+            image_path = os.path.join(path,f)
+            if ext in VALID_IMG_EXT and not(image_path in self.images_list) :
+                self.images_list[image_path] = False
         
-        for i, im in enumerate(self.images_list):
-            image_item = ImageTile(source=im, manager=self.root, tag=f"{i}")
-            self.root.ids.grid.add_widget(image_item)
+        for i, (im, drawn) in enumerate(self.images_list.items()):
+            if(not drawn):
+                image_item = ImageTile(source=im, manager=self.root, tag=f"{i}")
+                self.root.ids.grid.add_widget(image_item)
 
     def slider_down(self, slider, value):
         self.root.ids.grid.cols = value
 
-
     def superresolution(self):
         pass
+
+    def add_repo(self):
+        from plyer import filechooser
+        path = filechooser.choose_dir()
+        if(len(path) > 0):
+            print(path)
+            self.add_images(path[0])
+
+    def on_request_close(self, *args):
+        self.textpopup(title='Exit', text='Are you sure?')
+        return True
 
 
 ImageApp().run()
