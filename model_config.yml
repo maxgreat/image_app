@@ -1,7 +1,4 @@
-models:
-- name: Super Resolution
-  url: "https://localhost/superresolution/"
-  port: 8080
-- name: Object Removal
-  url: "https://localhost/objectremoval/"
-  port: 8080
+Super_Resolution:
+  url: "https://localhost:8080/superresolution/"
+Object_Removal:
+  url: "https://localhost:8080/objectremoval/"

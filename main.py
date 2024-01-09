@@ -1,5 +1,7 @@
 import os
 import yaml
+import requests
+os.environ['KIVY_IMAGE'] = 'pil'
 
 from kivy.lang import Builder
 from kivy.utils import platform
@@ -9,12 +11,12 @@ from kivymd.uix.behaviors import RectangularRippleBehavior
 from kivy.uix.image import AsyncImage
 from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
-
+from kivy.metrics import dp
 
 from kivymd.app import MDApp
 from kivymd.uix.hero import MDHeroFrom
 from kivymd.uix.menu import MDDropdownMenu
-from kivy.metrics import dp
+from kivymd.uix.snackbar import Snackbar
 
 
 VALID_IMG_EXT = [".jpg",".png",".tga"]
@@ -34,6 +36,7 @@ class ImageTile(MDHeroFrom):
             self.manager.current_heroes = [self.tag]
             self.manager.ids.hero_to.tag = self.tag
             self.manager.current = "Photo Screen"
+            self.manager.current_image = self
 
         Clock.schedule_once(switch_screen, 0.2)
 
@@ -46,11 +49,6 @@ class ImageApp(MDApp):
             self.images_list = self.store['photos']
         else:
             self.images_list = {}
-
-        self.models = yaml.safe_load("model_config.yml")
-
-    def build(self):
-        Window.bind(on_request_close=self.exit)
 
         menu_items = [
                     {
@@ -76,6 +74,37 @@ class ImageApp(MDApp):
             items=menu_items,
             width_mult=4,
         )
+
+        singles_items = [
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "SuperResolution",
+                        "height": dp(56),
+                        "on_release": lambda : self.superresolution(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Object Removal",
+                        "height": dp(56),
+                        "on_release": lambda : self.objectremoval(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Exit",
+                        "height": dp(56),
+                        "on_release": lambda : self.exit(),
+                    }
+                ]
+        self.singlemenu = MDDropdownMenu(
+            items=singles_items,
+            width_mult=4,
+        )
+
+        with open("model_config.yml", 'r') as file:
+            self.models = yaml.safe_load(file)
+
+    def build(self):
+        Window.bind(on_request_close=self.exit)
         return Builder.load_file('main.kv')
     
     def on_start(self):
@@ -119,13 +148,43 @@ class ImageApp(MDApp):
         self.menu.caller = button
         self.menu.open()
 
+    def photomenu(self, button):
+        self.singlemenu.caller = button
+        self.singlemenu.open()
 
     def clearimages(self):
         self.images_list = {}
         self.root.ids.grid.clear_widgets()
 
-    def superresolution(self):
-        pass
+    def superresolution(self, image=None):
+        if image is None:
+            image_path = self.root.current_heroes[0]
+        else:
+            print("Super resolution this image :", image[0])
+            image_path = image[0]
+        with open(image_path, 'rb') as image:
+            files = {'image': (image_path, image, 'multipart/form-data')}
+            try:
+                response = requests.post(self.models['Super_Resolution']['url'], files=files)
+            except Exception as e:
+                Snackbar(
+                    text="Cannot access model :" + str(e),
+                    snackbar_x="10dp",
+                    snackbar_y="10dp",
+                    size_hint_x=(
+                        Window.width - (dp(10) * 2)
+                    ) / Window.width
+                ).open()
+                return
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Save the upscaled image received from the server
+            with open(self.user_data_dir + 'upscaled_image.png', 'wb') as f:
+                f.write(response.content)
+            print("Upscaled image saved as 'upscaled_image.png'")
+        else:
+            print(f"Failed to upscale image. Status code: {response.status_code} - Message: {response.text}")
 
     def objectremoval(self):
         pass

@@ -33,21 +33,27 @@ MDScreenManager:
     MDScreen:
         name: "Photo Screen"
         heroes_to: [hero_to]
-        MDHeroTo:
-            id: hero_to
-            size_hint: 1, 1
-            pos_hint: {"center_x": 0.5, "center_y":0.5}
+        BoxLayout:
+            orientation: 'vertical'
+            MDTopAppBar:
+                title: "Photo"
+                left_action_items: [["menu", lambda x: app.photomenu(x)]]
+            MDHeroTo:
+                id: hero_to
+                size_hint: 1, 1
+                pos_hint: {"center_x": 0.5, "center_y":0.5}
         MDRaisedButton:
             text: "Super Resolution"
             pos_hint: {"center_x": .2}
             y: "36dp"
-            on_release: app.next_image()
+            on_release: app.superresolution(app.root.current_heroes)
         MDRaisedButton:
             text: "Back"
             pos_hint: {"center_x": .5}
             y: "36dp"
             on_release:
                 root.current_heroes = [hero_to.tag]
+                app.current_image = None
                 root.current = "Main Screen"
 
 <ImageTile>:
