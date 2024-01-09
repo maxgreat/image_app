@@ -49,6 +49,10 @@ class ImageApp(MDApp):
         else:
             self.images_list = {}
 
+        
+        with open("model_config.yml", 'r') as file:
+            self.models = yaml.safe_load(file)
+
         menu_items = [
                     {
                         "viewclass": "OneLineListItem",
@@ -77,48 +81,16 @@ class ImageApp(MDApp):
         singles_items = [
                     {
                         "viewclass": "OneLineListItem",
-                        "text": "SuperResolution",
+                        "text": name,
                         "height": dp(56),
-                        "on_release": lambda : self.superresolution(),
-                    },
-                    {
-                        "viewclass": "OneLineListItem",
-                        "text": "Image to Video",
-                        "height": dp(56),
-                        "on_release": lambda : self.img2vid(),
-                    },
-                    {
-                        "viewclass": "OneLineListItem",
-                        "text": "Object Detection",
-                        "height": dp(56),
-                        "on_release": lambda : self.objectDetection(),
-                    },
-                    {
-                        "viewclass": "OneLineListItem",
-                        "text": "Segmentation",
-                        "height": dp(56),
-                        "on_release": lambda : self.segmentation(),
-                    },
-                    {
-                        "viewclass": "OneLineListItem",
-                        "text": "Object Removal",
-                        "height": dp(56),
-                        "on_release": lambda : self.objectremoval(),
-                    },
-                    {
-                        "viewclass": "OneLineListItem",
-                        "text": "Exit",
-                        "height": dp(56),
-                        "on_release": lambda : self.exit(),
-                    }
+                        "on_release": lambda : self.call_url(self.models[name]['url']),
+                    } for name in self.models
                 ]
         self.singlemenu = MDDropdownMenu(
             items=singles_items,
             width_mult=4,
         )
 
-        with open("model_config.yml", 'r') as file:
-            self.models = yaml.safe_load(file)
 
     def build(self):
         Window.bind(on_request_close=self.exit)
@@ -188,36 +160,14 @@ class ImageApp(MDApp):
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
-                return None
-        return response
-
-    def superresolution(self):
-        response = self.call_url(self.models['Super_Resolution']['url'])
-        
-        if response is None:
-            return
-        
+                return
         if response.status_code == 200:
-            # Save the upscaled image received from the server
-            with open(self.user_data_dir + 'upscaled_image.png', 'wb') as f:
-                f.write(response.content)
-            print("Upscaled image saved as 'upscaled_image.png'")
-        else:
-            print(f"Failed to upscale image. Status code: {response.status_code} - Message: {response.text}")
-
-    def img2vid(self):
-        response = self.call_url(self.models['Super_Resolution']['url'])
-        
-        if response is None:
-            return
-        if response.status_code == 200:
-            # Save the video received from the server
             from plyer import filechooser
             path = filechooser.save_file()
             with open(path, 'wb') as f:
                 f.write(response.content)
             Snackbar(
-                    text="Saved video :" + path,
+                    text="Saved file :" + path,
                     snackbar_x="10dp",
                     snackbar_y="10dp",
                     size_hint_x=(
@@ -226,22 +176,13 @@ class ImageApp(MDApp):
                 ).open()
         else:
             Snackbar(
-                    text=f"Failed to create video. Status code: {response.status_code} - Message: {response.text}",
+                    text=f"Failed. Status code: {response.status_code} - Message: {response.text}",
                     snackbar_x="10dp",
                     snackbar_y="10dp",
                     size_hint_x=(
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
-
-    def objectDetection(self):
-        pass
-
-    def segmentation(self):
-        pass
-
-    def objectremoval(self):
-        pass
 
     def add_repo(self):
         from plyer import filechooser

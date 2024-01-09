@@ -6,6 +6,4 @@ Object_Detection:
   url: "https://localhost:8080/detection/"
 Segmentation:
   url: "https://localhost:8080/segmentation/"
-Object_Removal:
-  url: "https://localhost:8080/objectremoval/"
 
