@@ -1,4 +1,11 @@
 Super_Resolution:
   url: "https://localhost:8080/superresolution/"
+Image_to_vid:
+  url: "https://localhost:8080/img2vid/"
+Object_Detection:
+  url: "https://localhost:8080/detection/"
+Segmentation:
+  url: "https://localhost:8080/segmentation/"
 Object_Removal:
   url: "https://localhost:8080/objectremoval/"
+

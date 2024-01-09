@@ -36,7 +36,6 @@ class ImageTile(MDHeroFrom):
             self.manager.current_heroes = [self.tag]
             self.manager.ids.hero_to.tag = self.tag
             self.manager.current = "Photo Screen"
-            self.manager.current_image = self
 
         Clock.schedule_once(switch_screen, 0.2)
 
@@ -81,6 +80,24 @@ class ImageApp(MDApp):
                         "text": "SuperResolution",
                         "height": dp(56),
                         "on_release": lambda : self.superresolution(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Image to Video",
+                        "height": dp(56),
+                        "on_release": lambda : self.img2vid(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Object Detection",
+                        "height": dp(56),
+                        "on_release": lambda : self.objectDetection(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Segmentation",
+                        "height": dp(56),
+                        "on_release": lambda : self.segmentation(),
                     },
                     {
                         "viewclass": "OneLineListItem",
@@ -156,16 +173,12 @@ class ImageApp(MDApp):
         self.images_list = {}
         self.root.ids.grid.clear_widgets()
 
-    def superresolution(self, image=None):
-        if image is None:
-            image_path = self.root.current_heroes[0]
-        else:
-            print("Super resolution this image :", image[0])
-            image_path = image[0]
+    def call_url(self, url):
+        image_path = self.root.current_heroes[0]
         with open(image_path, 'rb') as image:
             files = {'image': (image_path, image, 'multipart/form-data')}
             try:
-                response = requests.post(self.models['Super_Resolution']['url'], files=files)
+                response = requests.post(url, files=files)
             except Exception as e:
                 Snackbar(
                     text="Cannot access model :" + str(e),
@@ -175,9 +188,15 @@ class ImageApp(MDApp):
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
-                return
+                return None
+        return response
 
-        # Check if the request was successful
+    def superresolution(self):
+        response = self.call_url(self.models['Super_Resolution']['url'])
+        
+        if response is None:
+            return
+        
         if response.status_code == 200:
             # Save the upscaled image received from the server
             with open(self.user_data_dir + 'upscaled_image.png', 'wb') as f:
@@ -185,6 +204,41 @@ class ImageApp(MDApp):
             print("Upscaled image saved as 'upscaled_image.png'")
         else:
             print(f"Failed to upscale image. Status code: {response.status_code} - Message: {response.text}")
+
+    def img2vid(self):
+        response = self.call_url(self.models['Super_Resolution']['url'])
+        
+        if response is None:
+            return
+        if response.status_code == 200:
+            # Save the video received from the server
+            from plyer import filechooser
+            path = filechooser.save_file()
+            with open(path, 'wb') as f:
+                f.write(response.content)
+            Snackbar(
+                    text="Saved video :" + path,
+                    snackbar_x="10dp",
+                    snackbar_y="10dp",
+                    size_hint_x=(
+                        Window.width - (dp(10) * 2)
+                    ) / Window.width
+                ).open()
+        else:
+            Snackbar(
+                    text=f"Failed to create video. Status code: {response.status_code} - Message: {response.text}",
+                    snackbar_x="10dp",
+                    snackbar_y="10dp",
+                    size_hint_x=(
+                        Window.width - (dp(10) * 2)
+                    ) / Window.width
+                ).open()
+
+    def objectDetection(self):
+        pass
+
+    def segmentation(self):
+        pass
 
     def objectremoval(self):
         pass
