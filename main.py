@@ -1,28 +1,38 @@
 import os
 import yaml
 import requests
-os.environ['KIVY_IMAGE'] = 'pil'
-
 from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RectangularRippleBehavior
-from kivy.uix.image import AsyncImage
+from kivy.uix.image import AsyncImage, Image
 from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
 from kivy.metrics import dp
+
 
 from kivymd.app import MDApp
 from kivymd.uix.hero import MDHeroFrom
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 
+from kivy.logger import Logger
+
+DELAY_LOADING = 10
+
 
 VALID_IMG_EXT = [".jpg",".png",".tga"]
 
 class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.handle_load_failure, DELAY_LOADING)
+
+    def handle_load_failure(self, warning):
+        if not self._coreimage.loaded:
+            self.parent.error_loading()
+    
 
 
 class ImageTile(MDHeroFrom):
@@ -30,6 +40,7 @@ class ImageTile(MDHeroFrom):
         super().__init__(**kwargs)
         self.ids.tile.source = source
         self.manager = manager
+        self.id = source
 
     def on_release(self):
         def switch_screen(*args):
@@ -39,13 +50,22 @@ class ImageTile(MDHeroFrom):
 
         Clock.schedule_once(switch_screen, 0.2)
 
+    def error_loading(self):
+        self.parent.remove_widget(self)
+        del MDApp.get_running_app().images_list[self.id]
+
 
 class ImageApp(MDApp):
+    def build_config(self, config):
+        config.setdefaults('kivy', {
+            'log_level': 'warning'
+        })
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.store = JsonStore('data.json')
         if 'photos' in self.store:
-            self.images_list = self.store['photos']
+            self.images_list = {im:-1 for im in self.store['photos']}
         else:
             self.images_list = {}
 
@@ -110,18 +130,24 @@ class ImageApp(MDApp):
             path = os.path.join(os.path.expanduser('~'), "/Pictures")
         self.add_images(path)
         
-
     def add_images(self, path: str):
         for f in os.listdir(path):
             ext = os.path.splitext(f)[1].lower()
             image_path = os.path.join(path,f)
             if ext in VALID_IMG_EXT and not(image_path in self.images_list) :
-                self.images_list[image_path] = False
+                self.images_list[image_path] = -1
         
-        for i, (im, drawn) in enumerate(self.images_list.items()):
-            if(not drawn):
+        for i, im in enumerate(self.images_list):
+            if(self.images_list[im] == -1):
+                print("Adding image :", im)
                 image_item = ImageTile(source=im, manager=self.root, tag=im)
+                self.images_list[im] = i
                 self.root.ids.grid.add_widget(image_item)
+                self.root._create_heroes_data(image_item)
+                self.root._heroes_data.append(image_item)
+            else:
+                print("Already drawn")
+        print(self.root._heroes_data)
 
     def slider_down(self, slider, value):
         self.root.ids.grid.cols = value
@@ -152,6 +178,10 @@ class ImageApp(MDApp):
             try:
                 response = requests.post(url, files=files)
             except Exception as e:
+                from plyer import filechooser
+                path = filechooser.save_file()
+                with open(path, 'wb') as f:
+                    f.write(b'test')
                 Snackbar(
                     text="Cannot access model :" + str(e),
                     snackbar_x="10dp",

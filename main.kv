@@ -2,6 +2,7 @@
 MDScreenManager:
     id: screenManager
     MDScreen:
+        id: mainScreen
         name: "Main Screen"
         MDBoxLayout:
             orientation: 'vertical'
@@ -48,8 +49,15 @@ MDScreenManager:
             y: "36dp"
             on_release:
                 root.current_heroes = [hero_to.tag]
-                app.current_image = None
                 root.current = "Main Screen"
+        MDRaisedButton:
+            text: "Next"
+            pos_hint: {"center_x": .9}
+            y: "36dp"
+            on_release:
+                root.heroes_to = [app.images_list[root.current_heroes[0]] + 1]
+                root.current_heroes = root.heroes_to.tag
+                root.current = "Photo Screen"
 
 <ImageTile>:
     size_hint_y: None
@@ -63,3 +71,4 @@ MDScreenManager:
         on_release: root.on_release()
         mipmap: True
         opacity : 1
+        on_error: print("Image was not loaded !")
