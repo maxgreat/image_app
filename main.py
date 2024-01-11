@@ -19,7 +19,7 @@ from kivymd.uix.snackbar import Snackbar
 
 from kivy.logger import Logger
 
-DELAY_LOADING = 10
+DELAY_LOADING = 1
 
 
 VALID_IMG_EXT = [".jpg",".png",".tga"]
@@ -27,33 +27,19 @@ VALID_IMG_EXT = [".jpg",".png",".tga"]
 class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.tag = self.source
+        self.app = MDApp.get_running_app()
         Clock.schedule_interval(self.handle_load_failure, DELAY_LOADING)
 
     def handle_load_failure(self, warning):
-        if not self._coreimage.loaded:
-            self.parent.error_loading()
-    
-
-
-class ImageTile(MDHeroFrom):
-    def __init__(self, source, manager, **kwargs):
-        super().__init__(**kwargs)
-        self.ids.tile.source = source
-        self.manager = manager
-        self.id = source
+        if not self.texture:
+            self.app.root.ids.grid.remove_widget(self)
 
     def on_release(self):
-        def switch_screen(*args):
-            self.manager.current_heroes = [self.tag]
-            self.manager.ids.hero_to.tag = self.tag
-            self.manager.current = "Photo Screen"
-
-        Clock.schedule_once(switch_screen, 0.2)
-
-    def error_loading(self):
-        self.parent.remove_widget(self)
-        del MDApp.get_running_app().images_list[self.id]
-
+        self.app.root.ids.photoshown.source = self.source
+        self.app.currentphoto = self.tag
+        self.app.root.current = "Photo Screen"
+    
 
 class ImageApp(MDApp):
     def build_config(self, config):
@@ -68,7 +54,7 @@ class ImageApp(MDApp):
             self.images_list = {im:-1 for im in self.store['photos']}
         else:
             self.images_list = {}
-
+        self.currentphoto = None
         
         with open("model_config.yml", 'r') as file:
             self.models = yaml.safe_load(file)
@@ -140,14 +126,14 @@ class ImageApp(MDApp):
         for i, im in enumerate(self.images_list):
             if(self.images_list[im] == -1):
                 print("Adding image :", im)
-                image_item = ImageTile(source=im, manager=self.root, tag=im)
+                #image_item = ImageTile(source=im, manager=self.root, tag=im)
+                image_item = ClickableImage(source=im)
                 self.images_list[im] = i
                 self.root.ids.grid.add_widget(image_item)
-                self.root._create_heroes_data(image_item)
-                self.root._heroes_data.append(image_item)
+                #self.root._create_heroes_data(image_item)
+                #self.root._heroes_data.append(image_item)
             else:
                 print("Already drawn")
-        print(self.root._heroes_data)
 
     def slider_down(self, slider, value):
         self.root.ids.grid.cols = value

@@ -33,42 +33,29 @@ MDScreenManager:
 
     MDScreen:
         name: "Photo Screen"
-        heroes_to: [hero_to]
+        id: photoScreen
         BoxLayout:
             orientation: 'vertical'
             MDTopAppBar:
                 title: "Photo"
                 left_action_items: [["menu", lambda x: app.photomenu(x)]]
-            MDHeroTo:
-                id: hero_to
+            ClickableImage:
+                id: photoshown
                 size_hint: 1, 1
                 pos_hint: {"center_x": 0.5, "center_y":0.5}
         MDRaisedButton:
             text: "Back"
             pos_hint: {"center_x": .5}
             y: "36dp"
-            on_release:
-                root.current_heroes = [hero_to.tag]
+            on_release: 
+                app.currentphoto = None
                 root.current = "Main Screen"
-        MDRaisedButton:
-            text: "Next"
-            pos_hint: {"center_x": .9}
-            y: "36dp"
-            on_release:
-                root.heroes_to = [app.images_list[root.current_heroes[0]] + 1]
-                root.current_heroes = root.heroes_to.tag
-                root.current = "Photo Screen"
-
-<ImageTile>:
-    size_hint_y: None
-    size_hint_x: 1
+<ClickableImage>:
+    id: tile
+    size_hint: 1, None
+    size: root.size
     height: "200dp"
-    radius: 24
-    ClickableImage:
-        id: tile
-        size_hint: None, None
-        size: root.size
-        on_release: root.on_release()
-        mipmap: True
-        opacity : 1
-        on_error: print("Image was not loaded !")
+    on_release: root.on_release()
+    mipmap: True
+    opacity : 1
+    on_error: print("Image was not loaded !")
