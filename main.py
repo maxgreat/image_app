@@ -10,6 +10,7 @@ from kivy.uix.image import AsyncImage, Image
 from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
 from kivy.metrics import dp
+from kivy.uix.popup import Popup
 
 
 from kivymd.app import MDApp
@@ -164,10 +165,6 @@ class ImageApp(MDApp):
             try:
                 response = requests.post(url, files=files)
             except Exception as e:
-                from plyer import filechooser
-                path = filechooser.save_file()
-                with open(path, 'wb') as f:
-                    f.write(b'test')
                 Snackbar(
                     text="Cannot access model :" + str(e),
                     snackbar_x="10dp",
@@ -178,6 +175,10 @@ class ImageApp(MDApp):
                 ).open()
                 return
         if response.status_code == 200:
+            Popup(title='Test popup',
+                content=VideoPlayer(source='myvideo.avi', state='play',
+                    options={'eos': 'loop'}),
+                size_hint=(None, None), size=(400, 400))
             from plyer import filechooser
             path = filechooser.save_file()
             with open(path, 'wb') as f:
