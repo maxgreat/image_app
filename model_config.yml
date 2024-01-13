@@ -1,11 +1,2 @@
-Super Resolution:
-  url: "https://localhost:8080/superresolution/"
 Image to video:
-  url: "https://localhost:8080/img2vid/"
-Object Detection:
-  url: "https://localhost:8080/detection/"
-Segmentation:
-  url: "https://localhost:8080/segmentation/"
-Generate From Image:
-  url: "https://localhost:8080/generate/"
-
+  url: "http://localhost:8000/video_diffusion"

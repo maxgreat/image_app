@@ -14,7 +14,6 @@ from kivy.uix.popup import Popup
 
 
 from kivymd.app import MDApp
-from kivymd.uix.hero import MDHeroFrom
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 
@@ -127,12 +126,9 @@ class ImageApp(MDApp):
         for i, im in enumerate(self.images_list):
             if(self.images_list[im] == -1):
                 print("Adding image :", im)
-                #image_item = ImageTile(source=im, manager=self.root, tag=im)
                 image_item = ClickableImage(source=im)
                 self.images_list[im] = i
                 self.root.ids.grid.add_widget(image_item)
-                #self.root._create_heroes_data(image_item)
-                #self.root._heroes_data.append(image_item)
             else:
                 print("Already drawn")
 
@@ -159,10 +155,11 @@ class ImageApp(MDApp):
         self.root.ids.grid.clear_widgets()
 
     def call_url(self, url):
-        image_path = self.root.current_heroes[0]
+        image_path = self.currentphoto
         with open(image_path, 'rb') as image:
             files = {'image': (image_path, image, 'multipart/form-data')}
             try:
+                print("Reaching :", url)
                 response = requests.post(url, files=files)
             except Exception as e:
                 Snackbar(
@@ -175,10 +172,12 @@ class ImageApp(MDApp):
                 ).open()
                 return
         if response.status_code == 200:
+            '''
             Popup(title='Test popup',
                 content=VideoPlayer(source='myvideo.avi', state='play',
                     options={'eos': 'loop'}),
                 size_hint=(None, None), size=(400, 400))
+            '''
             from plyer import filechooser
             path = filechooser.save_file()
             with open(path, 'wb') as f:
