@@ -22,7 +22,7 @@ from kivy.logger import Logger
 DELAY_LOADING = 1
 
 
-VALID_IMG_EXT = [".jpg",".png",".tga"]
+VALID_IMG_EXT = [".jpg",".png",".tga", ".gif"]
 
 class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
     def __init__(self, **kwargs):
@@ -39,6 +39,7 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
         self.app.root.ids.photoshown.source = self.source
         self.app.currentphoto = self.tag
         self.app.root.current = "Photo Screen"
+        
     
 
 class ImageApp(MDApp):
