@@ -172,10 +172,11 @@ class ImageApp(MDApp):
                 ).open()
                 return
         if response.status_code == 200:
-            '''
+            print("Received 200")
+            with open('tmp.jpg', 'wb') as f:
+                f.write(response.content)
             Popup(title='Test popup',
-                content=VideoPlayer(source='myvideo.avi', state='play',
-                    options={'eos': 'loop'}),
+                content=Image(source='tmp.jpg', size_hint=(1,1)),
                 size_hint=(None, None), size=(400, 400))
             '''
             from plyer import filechooser
@@ -190,6 +191,7 @@ class ImageApp(MDApp):
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
+            '''
         else:
             Snackbar(
                     text=f"Failed. Status code: {response.status_code} - Message: {response.text}",
