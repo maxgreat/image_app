@@ -59,3 +59,16 @@ MDScreenManager:
     mipmap: True
     opacity : 1
     on_error: print("Image was not loaded !")
+
+<ImageResultPopup>:
+    size_hint: (.9, .9)
+    size: (400, 400)
+    MDScreen:
+        AsyncNotLoadedImage:
+            id:image
+            source: 'giphy.gif'
+            size_hint: (1,1)
+        MDRaisedButton:
+            text: "Save Image"
+            pos_hint: {"center_x": .5}
+            y: "36dp"

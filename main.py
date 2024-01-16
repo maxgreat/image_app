@@ -11,7 +11,7 @@ from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
-
+from kivy.network.urlrequest import UrlRequest
 
 from kivymd.app import MDApp
 from kivymd.uix.menu import MDDropdownMenu
@@ -39,8 +39,31 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
         self.app.root.ids.photoshown.source = self.source
         self.app.currentphoto = self.tag
         self.app.root.current = "Photo Screen"
-        
     
+
+
+class ImageResultPopup(Popup):
+    pass
+
+
+class AsyncNotLoadedImage(AsyncImage):
+    def poll_image_availability(self, url):
+        def check_image_status(*args):
+            # This function will send a request to check if the image is ready
+            # For simplicity, we are directly trying to load the image here
+            def on_success(req, result):
+                # Image is ready, load it with AsyncImage
+                self.source = url
+
+            def on_failure(req, result):
+                # Image not ready, schedule another check
+                Clock.schedule_once(check_image_status, 1)  # Check again after 1 second
+
+            UrlRequest(url, on_success=on_success, on_failure=on_failure, on_error=on_failure)
+
+        # Schedule the first check
+        Clock.schedule_once(check_image_status, 1)
+
 
 class ImageApp(MDApp):
     def build_config(self, config):
@@ -90,7 +113,7 @@ class ImageApp(MDApp):
                         "viewclass": "OneLineListItem",
                         "text": name,
                         "height": dp(56),
-                        "on_release": lambda : self.call_url(self.models[name]['url']),
+                        "on_release": lambda x=name: self.call_url(self.models[x]['url']),
                     } for name in self.models
                 ]
         self.singlemenu = MDDropdownMenu(
@@ -173,12 +196,10 @@ class ImageApp(MDApp):
                 ).open()
                 return
         if response.status_code == 200:
-            print("Received 200")
-            with open('tmp.jpg', 'wb') as f:
-                f.write(response.content)
-            Popup(title='Test popup',
-                content=Image(source='tmp.jpg', size_hint=(1,1)),
-                size_hint=(None, None), size=(400, 400))
+            image_url = response.json()['image_url']
+            p = ImageResultPopup(title='Result')
+            p.ids.image.poll_image_availability(image_url)
+            p.open()
             '''
             from plyer import filechooser
             path = filechooser.save_file()

@@ -1,4 +1,4 @@
 Image to video:
-  url: "http://localhost:8000/video_diffusion"
+  url: "http://localhost:8080/video_diffusion"
 Super Resolution:
-  url: "http://localhost:8000/superresolution"
+  url: "http://localhost:8080/superresolution"
