@@ -72,3 +72,24 @@ MDScreenManager:
             text: "Save Image"
             pos_hint: {"center_x": .5}
             y: "36dp"
+
+<SupperResolutionOptions>
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
+
+    MDLabel:
+        text: "Width"
+    MDSlider:
+        id: width_slider
+        min: 64
+        max: 1024
+        value: 256
+    MDLabel:
+        text: "Height"
+    MDSlider:
+        id: height_slider
+        min: 64
+        max: 1024
+        value: 256

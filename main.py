@@ -1,21 +1,28 @@
 import os
 import yaml
 import requests
+from PIL import Image as PILImage
+
 from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.behaviors import RectangularRippleBehavior
-from kivy.uix.image import AsyncImage, Image
+from kivy.uix.image import AsyncImage
 from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
 from kivy.network.urlrequest import UrlRequest
+from kivy.uix.boxlayout import BoxLayout
+
 
 from kivymd.app import MDApp
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
+from kivymd.uix.slider import MDSlider
 
 from kivy.logger import Logger
 
@@ -45,6 +52,11 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
 class ImageResultPopup(Popup):
     pass
 
+class SupperResolutionOptions(BoxLayout):
+    def __init__(self, image_size, **kwargs):
+        super().__init__(**kwargs)
+        self.ids.width_slider.value = min(1024,image_size[0])
+        self.ids.height_slider.value = min(1024,image_size[1])
 
 class AsyncNotLoadedImage(AsyncImage):
     def poll_image_availability(self, url):
@@ -78,6 +90,7 @@ class ImageApp(MDApp):
             self.images_list = {im:-1 for im in self.store['photos']}
         else:
             self.images_list = {}
+            self.store['photos'] = {}
         self.currentphoto = None
         
         with open("model_config.yml", 'r') as file:
@@ -111,10 +124,16 @@ class ImageApp(MDApp):
         singles_items = [
                     {
                         "viewclass": "OneLineListItem",
-                        "text": name,
+                        "text": 'Super Resolution',
                         "height": dp(56),
-                        "on_release": lambda x=name: self.call_url(self.models[x]['url']),
-                    } for name in self.models
+                        "on_release": lambda : self.call_superresolution(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": 'Image to Video',
+                        "height": dp(56),
+                        "on_release": lambda : self.call_image2vid(),
+                    },
                 ]
         self.singlemenu = MDDropdownMenu(
             items=singles_items,
@@ -146,6 +165,8 @@ class ImageApp(MDApp):
             image_path = os.path.join(path,f)
             if ext in VALID_IMG_EXT and not(image_path in self.images_list) :
                 self.images_list[image_path] = -1
+        self.store['photos'] = self.images_list
+                
         
         for i, im in enumerate(self.images_list):
             if(self.images_list[im] == -1):
@@ -223,6 +244,46 @@ class ImageApp(MDApp):
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
+
+    def call_superresolution(self):
+        if(self.currentphoto is None):
+            return
+        image_size = PILImage.open(self.currentphoto).size
+        self.dialog = MDDialog(
+                text="Send Image to Server",
+                type="custom",
+                content_cls=SupperResolutionOptions(image_size),
+                buttons=[
+                    
+                    MDFlatButton(
+                        text="Send",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                    ),
+                ],
+            )
+        self.dialog.open()
+        #self.call_url(self.models['superresolution']['url'])
+
+    def call_image2vid(self):
+        if(self.currentphoto is None):
+            return
+        image_size = PILImage.open(self.currentphoto).size
+        self.dialog = MDDialog(
+                text="Send Image to Server",
+                type="custom",
+                content_cls=SupperResolutionOptions(),
+                buttons=[
+                    
+                    MDFlatButton(
+                        text="Send",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                    ),
+                ],
+            )
+        self.dialog.open()
+
 
     def add_repo(self):
         from plyer import filechooser
