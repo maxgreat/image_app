@@ -57,6 +57,18 @@ class SupperResolutionOptions(BoxLayout):
         super().__init__(**kwargs)
         self.ids.width_slider.value = min(1024,image_size[0])
         self.ids.height_slider.value = min(1024,image_size[1])
+        self.ids.width_slider.bind(value=self.onWidthChange)
+        self.ids.height_slider.bind(value=self.onHeightChange)
+
+    def onWidthChange(self, *args):
+        pass
+
+    def onHeightChange(self, *args):
+        pass
+
+    def checkboxChange(self, checkbox, value):
+        pass
+
 
 class AsyncNotLoadedImage(AsyncImage):
     def poll_image_availability(self, url):

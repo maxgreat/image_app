@@ -93,3 +93,10 @@ MDScreenManager:
         min: 64
         max: 1024
         value: 256
+    BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+            text: 'Keep Ration'
+        MDSwitch:
+            active: True
+            on_active: self.parent.checkboxChange(*args)
