@@ -69,6 +69,9 @@ class SupperResolutionOptions(BoxLayout):
     def checkboxChange(self, checkbox, value):
         pass
 
+    def send_image(self, *args):
+        self.close()
+
 
 class AsyncNotLoadedImage(AsyncImage):
     def poll_image_availability(self, url):
@@ -259,7 +262,8 @@ class ImageApp(MDApp):
 
     def call_superresolution(self):
         if(self.currentphoto is None):
-            return
+            return    
+
         image_size = PILImage.open(self.currentphoto).size
         self.dialog = MDDialog(
                 text="Send Image to Server",
@@ -271,10 +275,15 @@ class ImageApp(MDApp):
                         text="Send",
                         theme_text_color="Custom",
                         text_color=self.theme_cls.primary_color,
+                        on_press=self.send_superresolution_image,
                     ),
                 ],
             )
         self.dialog.open()
+
+    def send_superresolution_image(self, *args):
+        print('Sending Image to the server with options :', self.dialog)
+        self.dialog.dismiss()
         #self.call_url(self.models['superresolution']['url'])
 
     def call_image2vid(self):
