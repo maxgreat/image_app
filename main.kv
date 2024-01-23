@@ -72,6 +72,7 @@ MDScreenManager:
             text: "Save Image"
             pos_hint: {"center_x": .5}
             y: "36dp"
+            on_release:self.save_image
 
 <SupperResolutionOptions>
     orientation: "vertical"
@@ -101,4 +102,68 @@ MDScreenManager:
             text: 'Keep Ration'
         MDSwitch:
             active: True
-            on_active: self.parent.checkboxChange(*args)
+            on_active: root.checkboxChange
+
+<ImageGenerationOptions>
+    orientation: "vertical"
+    spacing: "24dp"
+    size_hint_y: None
+    height: "200dp"
+    MDTextField:
+        hint_text: "Text Prompt"
+    MDLabel:
+        text: "Number of Iterations"
+    MDSlider:
+        id: it_slider
+        min: 1
+        max: 25
+        value: 5
+    MDLabel:
+        text: "Width"
+    MDSlider:
+        id: width_slider
+        min: 64
+        max: 1024
+        value: 256
+    MDLabel:
+        text: "Height"
+    MDSlider:
+        id: height_slider
+        min: 64
+        max: 1024
+        value: 256
+
+<ImageToVidOptions>
+    orientation: "vertical"
+    spacing: "24dp"
+    size_hint_y: None
+    height: "200dp"
+    MDLabel:
+        text: "Number of Frames"
+    MDSlider:
+        id: it_slider
+        min: 1
+        max: 24
+        value: 14
+    MDLabel:
+        text: "Width"
+    MDSlider:
+        id: width_slider
+        min: 64
+        max: 1024
+        value: 256
+    MDLabel:
+        text: "Height"
+    MDSlider:
+        id: height_slider
+        min: 64
+        max: 1024
+        value: 256
+    BoxLayout:
+        orientation: 'horizontal'
+        MDLabel:
+            text: 'Keep Ration'
+        MDSwitch:
+            id: switch
+            active: True
+            on_active: root.checkboxChange

@@ -26,7 +26,7 @@ from kivymd.uix.slider import MDSlider
 
 from kivy.logger import Logger
 
-DELAY_LOADING = 1
+DELAY_LOADING = 4
 
 
 VALID_IMG_EXT = [".jpg",".png",".tga", ".gif"]
@@ -50,27 +50,67 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
 
 
 class ImageResultPopup(Popup):
-    pass
+    def save_image(self, *args):
+        from plyer import filechooser
+        path = filechooser.save_file(MDApp.get_running_app().currentphoto)
+
 
 class SupperResolutionOptions(BoxLayout):
     def __init__(self, image_size, **kwargs):
         super().__init__(**kwargs)
-        self.ids.width_slider.value = min(1024,image_size[0])
-        self.ids.height_slider.value = min(1024,image_size[1])
+        self.keepratio = True
+        self.ratio = image_size[0]/image_size[1]
+        self.ids.width_slider.max = image_size[0]
+        self.ids.width_slider.value = image_size[0]
+        self.ids.height_slider.max = image_size[1]
+        self.ids.height_slider.value = image_size[1]
         self.ids.width_slider.bind(value=self.onWidthChange)
         self.ids.height_slider.bind(value=self.onHeightChange)
 
-    def onWidthChange(self, *args):
-        pass
+    def onWidthChange(self, slider, value):
+        if self.ids.switch.value:
+            new_height = int(value / self.ratio)
+            self.ids.height_slider.value = new_height
 
-    def onHeightChange(self, *args):
-        pass
+    def onHeightChange(self, slider, value):
+        if self.keepratio:
+            new_width = int(value * self.ratio)
+            self.ids.width_slider.value = new_width
 
     def checkboxChange(self, checkbox, value):
-        pass
+        print(f'Changing of checkbox {checkbox}ratio to : {value}')
+        self.keepratio = value
 
-    def send_image(self, *args):
-        self.close()
+
+class ImageGenerationOptions(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+class ImageToVidOptions(BoxLayout):
+    def __init__(self, image_size, **kwargs):
+        super().__init__(**kwargs)
+        self.keepratio = True
+        self.ratio = image_size[0]/image_size[1]
+        self.ids.width_slider.max = image_size[0]
+        self.ids.width_slider.value = image_size[0]
+        self.ids.height_slider.max = image_size[1]
+        self.ids.height_slider.value = image_size[1]
+        self.ids.width_slider.bind(value=self.onWidthChange)
+        self.ids.height_slider.bind(value=self.onHeightChange)
+    
+    def onWidthChange(self, slider, value):
+        if self.keepratio:
+            new_height = int(value / self.ratio)
+            self.ids.height_slider.value = new_height
+
+    def onHeightChange(self, slider, value):
+        if self.keepratio:
+            new_width = int(value * self.ratio)
+            self.ids.width_slider.value = new_width
+
+    def checkboxChange(self, checkbox, value):
+        print(f'Changing of checkbox {checkbox}ratio to : {value}')
+        self.keepratio = value
 
 
 class AsyncNotLoadedImage(AsyncImage):
@@ -106,7 +146,7 @@ class ImageApp(MDApp):
         else:
             self.images_list = {}
             self.store['photos'] = {}
-        self.currentphoto = None
+        self.currentphoto: str = None
         
         with open("model_config.yml", 'r') as file:
             self.models = yaml.safe_load(file)
@@ -114,9 +154,9 @@ class ImageApp(MDApp):
         menu_items = [
                     {
                         "viewclass": "OneLineListItem",
-                        "text": "Sync Library",
+                        "text": "Generate Image",
                         "height": dp(56),
-                        "on_release": lambda : self.synclib(),
+                        "on_release": lambda : self.generate_image(),
                     },
                     {
                         "viewclass": "OneLineListItem",
@@ -194,13 +234,8 @@ class ImageApp(MDApp):
 
     def slider_down(self, slider, value):
         self.root.ids.grid.cols = value
-
-    def synclib(self, *args):
-        """
-            Upload images to the server
-        """
-        print("Checking missing images on server")
-        pass
+        for child in self.root.ids.grid.children:
+            child.height = str(int(200*3/value)) + 'dp'
 
     def mainmenu(self, button):
         self.menu.caller = button
@@ -236,20 +271,6 @@ class ImageApp(MDApp):
             p = ImageResultPopup(title='Result')
             p.ids.image.poll_image_availability(image_url)
             p.open()
-            '''
-            from plyer import filechooser
-            path = filechooser.save_file()
-            with open(path, 'wb') as f:
-                f.write(response.content)
-            Snackbar(
-                    text="Saved file :" + path,
-                    snackbar_x="10dp",
-                    snackbar_y="10dp",
-                    size_hint_x=(
-                        Window.width - (dp(10) * 2)
-                    ) / Window.width
-                ).open()
-            '''
         else:
             Snackbar(
                     text=f"Failed. Status code: {response.status_code} - Message: {response.text}",
@@ -264,13 +285,27 @@ class ImageApp(MDApp):
         if(self.currentphoto is None):
             return    
 
-        image_size = PILImage.open(self.currentphoto).size
+        width, height = PILImage.open(self.currentphoto).size
+        if width > 1024 or height > 1024:
+            if width > height:
+                new_width = 1024
+                new_height = int(new_width * height / width)
+            else:
+                new_height = 1024
+                new_width = int(new_height * width / height)
+        else:
+            new_width, new_height = width, height
         self.dialog = MDDialog(
                 text="Send Image to Server",
                 type="custom",
-                content_cls=SupperResolutionOptions(image_size),
+                content_cls=SupperResolutionOptions((new_width, new_height)),
                 buttons=[
-                    
+                    MDFlatButton(
+                        text="Cancel",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.dissmiss_dialog,
+                    ),
                     MDFlatButton(
                         text="Send",
                         theme_text_color="Custom",
@@ -280,12 +315,7 @@ class ImageApp(MDApp):
                 ],
             )
         self.dialog.open()
-
-    def send_superresolution_image(self, *args):
-        print('Sending Image to the server with options :', self.dialog)
-        self.dialog.dismiss()
-        #self.call_url(self.models['superresolution']['url'])
-
+    
     def call_image2vid(self):
         if(self.currentphoto is None):
             return
@@ -293,18 +323,71 @@ class ImageApp(MDApp):
         self.dialog = MDDialog(
                 text="Send Image to Server",
                 type="custom",
-                content_cls=SupperResolutionOptions(),
+                content_cls=ImageToVidOptions(image_size),
                 buttons=[
-                    
+                    MDFlatButton(
+                        text="Cancel",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.dissmiss_dialog,
+                    ),
                     MDFlatButton(
                         text="Send",
                         theme_text_color="Custom",
                         text_color=self.theme_cls.primary_color,
+                        on_press= self.send_image2vid
                     ),
                 ],
             )
         self.dialog.open()
 
+    def generate_image(self, *args):
+        self.dialog = MDDialog(
+                title="Image Generation Options",
+                type="custom",
+                content_cls=ImageGenerationOptions(),
+                buttons=[
+                    MDFlatButton(
+                        text="Cancel",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.dissmiss_dialog,
+                    ),
+                    MDFlatButton(
+                        text="Send",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_press=self.send_generate_image,
+                    ),
+                ],
+            )
+        self.dialog.update_height()
+        self.dialog.open()
+
+    
+    def dissmiss_dialog(self, *args):
+        if self.dialog:
+            self.dialog.dismiss()
+
+    def send_superresolution_image(self, *args):
+        print('Sending Image to the server with options :', self.dialog)
+        self.dialog.dismiss()
+        #self.call_url(self.models['superresolution']['url'])
+
+    def send_generate_image(self, *args):
+        print('Sending Image to the server with options :', self.dialog)
+        self.dialog.dismiss()
+        #self.call_url(self.models['superresolution']['url'])
+    
+    def send_image2vid(self, *args):
+        print('Sending Image to the server with options :', self.dialog)
+        self.dialog.dismiss()
+        #self.call_url(self.models['superresolution']['url'])
+
+    def save_image(self):
+        from plyer import filechooser
+        path = filechooser.save_file(self.currentphoto)
+        
 
     def add_repo(self):
         from plyer import filechooser
