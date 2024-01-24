@@ -2,3 +2,5 @@ img2vid:
   url: "http://localhost:8080/video_diffusion"
 superresolution:
   url: "http://localhost:8080/superresolution"
+imagegeneration:
+  url: "http://localhost:8080/generaateImag"

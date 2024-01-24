@@ -7,7 +7,6 @@ from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.uix.behaviors import ButtonBehavior
-from kivymd.uix.behaviors import RectangularRippleBehavior
 from kivy.uix.image import AsyncImage
 from kivy.core.window import Window
 from kivy.storage.jsonstore import JsonStore
@@ -22,13 +21,11 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
-from kivymd.uix.slider import MDSlider
+from kivymd.uix.behaviors import RectangularRippleBehavior
 
 from kivy.logger import Logger
 
 DELAY_LOADING = 4
-
-
 VALID_IMG_EXT = [".jpg",".png",".tga", ".gif"]
 
 class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
@@ -73,12 +70,11 @@ class SupperResolutionOptions(BoxLayout):
             self.ids.height_slider.value = new_height
 
     def onHeightChange(self, slider, value):
-        if self.keepratio:
+        if self.ids.switch.value:
             new_width = int(value * self.ratio)
             self.ids.width_slider.value = new_width
 
     def checkboxChange(self, checkbox, value):
-        print(f'Changing of checkbox {checkbox}ratio to : {value}')
         self.keepratio = value
 
 
@@ -99,27 +95,23 @@ class ImageToVidOptions(BoxLayout):
         self.ids.height_slider.bind(value=self.onHeightChange)
     
     def onWidthChange(self, slider, value):
-        if self.keepratio:
+        if self.ids.switch.value:
             new_height = int(value / self.ratio)
             self.ids.height_slider.value = new_height
 
     def onHeightChange(self, slider, value):
-        if self.keepratio:
+        if self.ids.switch.value:
             new_width = int(value * self.ratio)
             self.ids.width_slider.value = new_width
 
     def checkboxChange(self, checkbox, value):
-        print(f'Changing of checkbox {checkbox}ratio to : {value}')
         self.keepratio = value
 
 
 class AsyncNotLoadedImage(AsyncImage):
     def poll_image_availability(self, url):
         def check_image_status(*args):
-            # This function will send a request to check if the image is ready
-            # For simplicity, we are directly trying to load the image here
             def on_success(req, result):
-                # Image is ready, load it with AsyncImage
                 self.source = url
 
             def on_failure(req, result):
@@ -372,17 +364,17 @@ class ImageApp(MDApp):
     def send_superresolution_image(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        #self.call_url(self.models['superresolution']['url'])
+        self.call_url(self.models['superresolution']['url'])
 
     def send_generate_image(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        #self.call_url(self.models['superresolution']['url'])
+        self.call_url(self.models['imagegeneration']['url'])
     
     def send_image2vid(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        #self.call_url(self.models['superresolution']['url'])
+        self.call_url(self.models['image2vid']['url'])
 
     def save_image(self):
         from plyer import filechooser
