@@ -241,23 +241,20 @@ class ImageApp(MDApp):
         self.images_list = {}
         self.root.ids.grid.clear_widgets()
 
-    def call_url(self, url):
-        image_path = self.currentphoto
-        with open(image_path, 'rb') as image:
-            files = {'image': (image_path, image, 'multipart/form-data')}
-            try:
-                print("Reaching :", url)
-                response = requests.post(url, files=files)
-            except Exception as e:
-                Snackbar(
-                    text="Cannot access model :" + str(e),
-                    snackbar_x="10dp",
-                    snackbar_y="10dp",
-                    size_hint_x=(
-                        Window.width - (dp(10) * 2)
-                    ) / Window.width
-                ).open()
-                return
+    def call_url(self, url, data=None, files=None):
+        try:
+            print("Reaching :", url)
+            response = requests.post(url, data=data, files=files)
+        except Exception as e:
+            Snackbar(
+                text="Cannot access model :" + str(e),
+                snackbar_x="10dp",
+                snackbar_y="10dp",
+                size_hint_x=(
+                    Window.width - (dp(10) * 2)
+                ) / Window.width
+            ).open()
+            return
         if response.status_code == 200:
             image_url = response.json()['image_url']
             p = ImageResultPopup(title='Result')
@@ -364,17 +361,24 @@ class ImageApp(MDApp):
     def send_superresolution_image(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        self.call_url(self.models['superresolution']['url'])
+        image_path = self.currentphoto
+        files = {'image': (image_path, open(image_path, 'rb'), 'multipart/form-data')}
+        self.call_url(self.models['superresolution']['url'], files=files)
 
     def send_generate_image(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        self.call_url(self.models['imagegeneration']['url'])
+        data = {'prompt': self.dialog.ids.prompt, 'neg_prompt':self.dialog.ids.neg_prompt, 
+                'width': self.dialog.ids.width_slider.value, 'height': self.dialog.ids.height_slider.value,
+                'num_interation': self.dialog.ids.it_slider.value}
+        self.call_url(self.models['imagegeneration']['url'], data=data)
     
     def send_image2vid(self, *args):
         print('Sending Image to the server with options :', self.dialog)
         self.dialog.dismiss()
-        self.call_url(self.models['image2vid']['url'])
+        image_path = self.currentphoto
+        files = {'image': (image_path, open(image_path, 'rb'), 'multipart/form-data')}
+        self.call_url(self.models['image2vid']['url'], files=files)
 
     def save_image(self):
         from plyer import filechooser

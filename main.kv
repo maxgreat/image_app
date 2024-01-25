@@ -108,9 +108,13 @@ MDScreenManager:
     orientation: "vertical"
     spacing: "24dp"
     size_hint_y: None
-    height: "200dp"
+    height: "220dp"
     MDTextField:
+        id: prompt
         hint_text: "Text Prompt"
+    MDTextField:
+        id: neg_prompt
+        hint_text: "Negative Text Prompt"
     MDLabel:
         text: "Number of Iterations"
     MDSlider:
