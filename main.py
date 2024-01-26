@@ -247,7 +247,7 @@ class ImageApp(MDApp):
             response = requests.post(url, data=data, files=files)
         except Exception as e:
             Snackbar(
-                text="Cannot access model :" + str(e),
+                text="Cannot access server :" + str(e),
                 snackbar_x="10dp",
                 snackbar_y="10dp",
                 size_hint_x=(
@@ -360,17 +360,17 @@ class ImageApp(MDApp):
 
     def send_superresolution_image(self, *args):
         print('Sending Image to the server with options :', self.dialog)
-        self.dialog.dismiss()
         image_path = self.currentphoto
         files = {'image': (image_path, open(image_path, 'rb'), 'multipart/form-data')}
+        self.dialog.dismiss()
         self.call_url(self.models['superresolution']['url'], files=files)
 
     def send_generate_image(self, *args):
-        print('Sending Image to the server with options :', self.dialog)
+        print('Sending Image to the server with options :', self.dialog.content_cls.ids)
+        data = {'prompt': self.dialog.content_cls.ids.prompt.text, 'neg_prompt':self.dialog.content_cls.ids.neg_prompt.text, 
+                'width': self.dialog.content_cls.ids.width_slider.value, 'height': self.dialog.content_cls.ids.height_slider.value,
+                'num_interation': self.dialog.content_cls.ids.it_slider.value}
         self.dialog.dismiss()
-        data = {'prompt': self.dialog.ids.prompt, 'neg_prompt':self.dialog.ids.neg_prompt, 
-                'width': self.dialog.ids.width_slider.value, 'height': self.dialog.ids.height_slider.value,
-                'num_interation': self.dialog.ids.it_slider.value}
         self.call_url(self.models['imagegeneration']['url'], data=data)
     
     def send_image2vid(self, *args):

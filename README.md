@@ -2,7 +2,11 @@
 
 Simple demonstration using Kivy to show images and call different Deep Learning model
 
+![Screenshot app gallery](example1.png)
+
 Made to work with : https://github.com/maxgreat/Deep-Learning-server
+
+![Screenshot image view](example2.png)
 
 Model URLs are stored in model_config.yml
 

@@ -3,4 +3,4 @@ img2vid:
 superresolution:
   url: "http://localhost:8080/superresolution"
 imagegeneration:
-  url: "http://localhost:8080/generaateImag"
+  url: "http://localhost:8080/imagegeneration"
