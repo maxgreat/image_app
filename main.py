@@ -49,7 +49,7 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
 class ImageResultPopup(Popup):
     def save_image(self, *args):
         from plyer import filechooser
-        path = filechooser.save_file(MDApp.get_running_app().currentphoto)
+        filechooser.save_file(MDApp.get_running_app().currentphoto)
 
 
 class SupperResolutionOptions(BoxLayout):
@@ -109,19 +109,23 @@ class ImageToVidOptions(BoxLayout):
 
 
 class AsyncNotLoadedImage(AsyncImage):
+    '''
+        Handle the loading of the image from the server, waiting for the task to be done
+    '''
     def poll_image_availability(self, url):
-        def check_image_status(*args):
-            def on_success(req, result):
-                self.source = url
+        def get_result(*args):
+                response = requests.get(url)
+                data = response.json()
 
-            def on_failure(req, result):
-                # Image not ready, schedule another check
-                Clock.schedule_once(check_image_status, 1)  # Check again after 1 second
+                if data['state'] == 'SUCCESS':
+                    self.source = data['result']
+                elif data['state'] == 'PENDING':
+                    Clock.schedule_once(get_result, 1)
+                else:
+                    pass #see what to do if generation fail
 
-            UrlRequest(url, on_success=on_success, on_failure=on_failure, on_error=on_failure)
-
-        # Schedule the first check
-        Clock.schedule_once(check_image_status, 1)
+        # Assuming 'task_id' is received from the initial prediction request
+        Clock.schedule_once(get_result, 1)
 
 
 class ImageApp(MDApp):
