@@ -4,7 +4,7 @@ Simple demonstration using Kivy to show images and call different Deep Learning 
 
 ![Screenshot app gallery](example1.png)
 
-Made to work with : https://github.com/maxgreat/Deep-Learning-server
+Made to work with : [https://github.com/maxgreat/Deep-Learning-server](https://github.com/maxgreat/AIModelServing)
 
 ![Screenshot image view](example2.png)
 
