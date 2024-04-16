@@ -16,6 +16,8 @@ from kivy.metrics import dp
 from kivy.uix.popup import Popup
 from kivy.network.urlrequest import UrlRequest
 from kivy.uix.boxlayout import BoxLayout
+from kivy.graphics import Rectangle, Color
+
 
 
 from kivymd.app import MDApp
@@ -35,6 +37,9 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
         super().__init__(**kwargs)
         self.tag = self.source
         self.app = MDApp.get_running_app()
+        self.rects =  [(100, 100, 150, 150), (300, 200, 100, 50)]
+        self.rectangles = []
+        self.bind(pos=self.update_rects, size=self.update_rects)
         Clock.schedule_interval(self.handle_load_failure, DELAY_LOADING)
 
     def handle_load_failure(self, warning):
@@ -43,9 +48,24 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
 
     def on_release(self):
         self.app.root.ids.photoshown.source = self.source
-        print("Get Faces :", get_faces(PILImage.open(self.source)))
         self.app.currentphoto = self.tag
         self.app.root.current = "Photo Screen"
+    
+    def on_kv_post(self, base_widget):
+        if hasattr(self, 'rect'):
+            with self.canvas.after:
+                Color(1, 0, 0, 0.5)  # Red color with 50% opacity
+                for rect in self.rects:
+                    print("Drawing rect", rect)
+                    x, y, w, h = rect
+                    rectangle = Rectangle(pos=(self.x + x, self.y + y), size=(w, h))
+                    self.rectangles.append(rectangle)
+
+    def update_rects(self, *args):
+        for rectangle, rect in zip(self.rectangles, self.rects):
+            x, y, w, h = rect
+            rectangle.pos = (self.x + x, self.y + y)
+            rectangle.size = (w, h)
     
 
 
@@ -178,7 +198,13 @@ class ImageApp(MDApp):
         singles_items = [
                     {
                         "viewclass": "OneLineListItem",
-                        "text": 'Super Resolution',
+                        'text': 'Detect Faces',
+                        "height": dp(56),
+                        "on_release": lambda : self.detect_faces(),
+                    },
+                    {
+                        "viewclass": "OneLineListItem",
+                        "text": "Super Resolution",
                         "height": dp(56),
                         "on_release": lambda : self.call_superresolution(),
                     },
@@ -193,6 +219,8 @@ class ImageApp(MDApp):
             items=singles_items,
             width_mult=4,
         )
+        
+
 
 
     def build(self):
@@ -212,6 +240,7 @@ class ImageApp(MDApp):
         else:
             path = os.path.join(os.path.expanduser('~'), "/Pictures")
         self.add_images(path)
+        self.root.ids.faces_container.opacity = 0  # Hide ScrollView if no faces
         
     def add_images(self, path: str):
         for f in os.listdir(path):
@@ -276,6 +305,17 @@ class ImageApp(MDApp):
                         Window.width - (dp(10) * 2)
                     ) / Window.width
                 ).open()
+
+    def detect_faces(self):
+        pil_image = PILImage.open(self.currentphoto)
+        self.faces = get_faces(pil_image)
+        for i, face in enumerate(self.faces):
+            bbox = face['bbox']
+            crop_box = (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))
+            face_image = pil_image.crop(crop_box)
+            face_image.save(f'face{i}.jpg')
+        #self.add_images_face()
+
 
     def call_superresolution(self):
         if(self.currentphoto is None):

@@ -35,21 +35,31 @@ MDScreenManager:
         name: "Photo Screen"
         id: photoScreen
         BoxLayout:
-            orientation: 'vertical'
-            MDTopAppBar:
-                title: "Photo"
-                left_action_items: [["menu", lambda x: app.photomenu(x)]]
-            ClickableImage:
-                id: photoshown
-                size_hint: 1, 1
-                pos_hint: {"center_x": 0.5, "center_y":0.5}
-        MDRaisedButton:
-            text: "Back"
-            pos_hint: {"center_x": .5}
-            y: "36dp"
-            on_release: 
-                app.currentphoto = None
-                root.current = "Main Screen"
+            orientation: 'horizontal'
+            BoxLayout:
+                id: photoScreenBoxLayout
+                orientation: 'vertical'
+                MDTopAppBar:
+                    title: "Photo"
+                    left_action_items: [["menu", lambda x: app.photomenu(x)]]
+                ClickableImage:
+                    id: photoshown
+                    size_hint: 1, 1
+                    pos_hint: {"center_x": 0.5, "center_y":0.5}
+                MDRaisedButton:
+                    text: "Back"
+                    pos_hint: {"center_x": .5}
+                    y: "36dp"
+                    on_release: 
+                        app.currentphoto = None
+                        root.current = "Main Screen"
+            ScrollView:
+                BoxLayout:
+                    id: faces_container
+                    orientation: 'vertical'
+                    size_hint_x: 0.2
+                    do_scroll_x: False
+                    height: self.minimum_height
 <ClickableImage>:
     id: tile
     size_hint: 1, None

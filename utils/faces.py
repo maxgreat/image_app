@@ -24,7 +24,7 @@ def get_faces(img: Image.Image):
     new_file_name = f'temp/{uuid.uuid4()}.png'
     img.save(new_file_name)
     img_png = cv2.imread(new_file_name)
-    return app.get(img)
+    return app.get(img_png)
 
 def swap_face(frame, faces, reference_face):
     for face in faces:
