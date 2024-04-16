@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 data.json
 tmp.gif
+inswapper_128.onnx

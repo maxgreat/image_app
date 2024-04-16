@@ -2,3 +2,5 @@ kivy
 kivymd
 requests
 pillow
+opencv-python
+insightface

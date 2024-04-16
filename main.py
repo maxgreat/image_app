@@ -3,6 +3,8 @@ import yaml
 import requests
 from PIL import Image as PILImage
 
+from utils.faces import get_faces
+
 from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
@@ -41,6 +43,7 @@ class ClickableImage(RectangularRippleBehavior, ButtonBehavior, AsyncImage):
 
     def on_release(self):
         self.app.root.ids.photoshown.source = self.source
+        print("Get Faces :", get_faces(PILImage.open(self.source)))
         self.app.currentphoto = self.tag
         self.app.root.current = "Photo Screen"
     
